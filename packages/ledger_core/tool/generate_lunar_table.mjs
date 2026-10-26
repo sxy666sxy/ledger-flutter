@@ -25,7 +25,7 @@ function lunarParts(utcDate) {
 
 const MONTH_NUM = {
   正月: 1, 二月: 2, 三月: 3, 四月: 4, 五月: 5, 六月: 6,
-  七月: 7, 八月: 8, 九月: 9, 十月: 10, 十一月: 11, 十二月: 12,
+  七月: 7, 八月: 8, 九月: 9, 十月: 10, 十一月: 11, 冬月: 11, 腊月: 12,
 };
 
 function monthInfo(monthName) {
@@ -114,7 +114,7 @@ function leapDaysOf(y) {
 function monthDaysOf(y, m) {
   return table[y - MIN_YEAR] & (0x10000 >> m) ? 30 : 29;
 }
-const MONTH_NAMES = ['正月', '二月', '三月', '四月', '五月', '六月', '七月', '八月', '九月', '十月', '十一月', '十二月'];
+const MONTH_NAMES = ['正月', '二月', '三月', '四月', '五月', '六月', '七月', '八月', '九月', '十月', '十一月', '腊月'];
 
 function yearDaysOf(y) {
   let days = 348;

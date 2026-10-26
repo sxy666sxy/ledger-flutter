@@ -33,11 +33,18 @@ jobs:
         run: |
           flutter create --platforms=android --org com.xingkong \
             --project-name xingkong_ledger .
+          # flutter create 生成的模板测试引用的是 MyApp，与本工程不匹配
+          rm -f test/widget_test.dart
           # 与 WebView 版（com.xingkong.ledger）区分，迁移期两个 App 可并存
-          sed -i 's/com\.xingkong\.xingkong_ledger/com.xingkong.ledger.flutter/g' android/app/build.gradle
+          # 注意：新版模板用 Kotlin DSL（build.gradle.kts），两种都要处理
+          for f in android/app/build.gradle android/app/build.gradle.kts; do
+            [ -f "$f" ] || continue
+            sed -i 's/com\.xingkong\.xingkong_ledger/com.xingkong.ledger.flutter/g' "$f"
+            sed -i -E 's/minSdk(Version)?[[:space:]]*[=:][[:space:]]*flutter\.minSdkVersion/minSdk = 24/' "$f"
+            echo "--- $f"; grep -nE 'applicationId|namespace|minSdk' "$f"
+          done
           sed -i 's/android:label="[^"]*"/android:label="星空记账"/' android/app/src/main/AndroidManifest.xml
-          sed -i 's/minSdkVersion flutter.minSdkVersion/minSdkVersion 24/' android/app/build.gradle
-          grep -nE 'applicationId|namespace|minSdk' android/app/build.gradle
+          grep -n 'android:label' android/app/src/main/AndroidManifest.xml
 
       - name: Get dependencies
         run: |
@@ -52,6 +59,9 @@ jobs:
       - name: Run core tests
         if: hashFiles('packages/ledger_core/pubspec.yaml') != ''
         run: cd packages/ledger_core && flutter test || dart test
+
+      - name: Widget tests
+        run: flutter test
 
       - name: Build APK
         run: flutter build apk --release --no-shrink
