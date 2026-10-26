@@ -1,0 +1,71 @@
+name: Flutter Build
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      # 仓库只保留 lib/ + pubspec.yaml，平台目录由 CI 生成，
+      # 避免把 flutter create 的样板代码提交进版本库。
+      - name: Scaffold android platform
+        run: |
+          flutter create --platforms=android --org com.xingkong \
+            --project-name xingkong_ledger .
+          # 与 WebView 版（com.xingkong.ledger）区分，迁移期两个 App 可并存
+          sed -i 's/com\.xingkong\.xingkong_ledger/com.xingkong.ledger.flutter/g' android/app/build.gradle
+          sed -i 's/android:label="[^"]*"/android:label="星空记账"/' android/app/src/main/AndroidManifest.xml
+          sed -i 's/minSdkVersion flutter.minSdkVersion/minSdkVersion 24/' android/app/build.gradle
+          grep -nE 'applicationId|namespace|minSdk' android/app/build.gradle
+
+      - name: Get dependencies
+        run: |
+          flutter pub get
+          if [ -f packages/ledger_core/pubspec.yaml ]; then
+            (cd packages/ledger_core && flutter pub get)
+          fi
+
+      - name: Analyze
+        run: flutter analyze --no-fatal-infos
+
+      - name: Run core tests
+        if: hashFiles('packages/ledger_core/pubspec.yaml') != ''
+        run: cd packages/ledger_core && flutter test || dart test
+
+      - name: Build APK
+        run: flutter build apk --release --no-shrink
+
+      - name: Rename artifact
+        run: |
+          mkdir -p out
+          cp build/app/outputs/flutter-apk/app-release.apk \
+             "out/xingkong-ledger-flutter-${GITHUB_SHA::7}.apk"
+          ls -lh out
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: xingkong-ledger-flutter-apk
+          path: out/*.apk
+          if-no-files-found: error

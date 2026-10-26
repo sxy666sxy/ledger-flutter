@@ -1,0 +1,14 @@
+# Flutter 工程目录约定
+.dart_tool/
+.packages
+build/
+.flutter-plugins
+.flutter-plugins-dependencies
+pubspec.lock
+# 平台目录由 CI 的 flutter create 生成，不入库
+android/
+ios/
+macos/
+linux/
+windows/
+web/
