@@ -12,3 +12,6 @@ macos/
 linux/
 windows/
 web/
+
+# 数据层移植进行中，测试转绿后再入库
+packages/ledger_core/

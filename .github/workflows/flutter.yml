@@ -54,7 +54,7 @@ jobs:
           fi
 
       - name: Analyze
-        run: flutter analyze --no-fatal-infos
+        run: flutter analyze lib test --no-fatal-infos
 
       - name: Run core tests
         if: hashFiles('packages/ledger_core/pubspec.yaml') != ''
